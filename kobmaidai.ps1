@@ -1,7 +1,5 @@
 $ErrorActionPreference = "Stop"
 
-try {
-
 # =====================================================
 # AUTO ADMIN
 # =====================================================
@@ -12,17 +10,27 @@ $IsAdmin = ([Security.Principal.WindowsPrincipal]
 
 if (-not $IsAdmin) {
     Start-Process powershell.exe `
-        -ArgumentList "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
+        -ArgumentList "-NoExit -ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
         -Verb RunAs
     exit
 }
 
-$Host.UI.RawUI.WindowTitle = "BOOTFPS ULTRA S+"
-Clear-Host
+function Pause-End {
+    Write-Host ""
+    Write-Host "Press ENTER to continue..." -ForegroundColor Yellow
+    Read-Host | Out-Null
+}
 
 # =====================================================
-# MENU
+# MENU LOOP (กันหน้าต่างหาย)
 # =====================================================
+
+while ($true) {
+
+try {
+
+Clear-Host
+$Host.UI.RawUI.WindowTitle = "BOOTFPS ULTRA S+"
 
 Write-Host ""
 Write-Host "=====================================" -ForegroundColor Cyan
@@ -31,9 +39,16 @@ Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "1 - APPLY ULTRA FPS (RECOMMENDED)" -ForegroundColor Green
 Write-Host "2 - RESTORE WINDOWS DEFAULT" -ForegroundColor Yellow
+Write-Host "0 - EXIT"
 Write-Host ""
 
 $choice = Read-Host "Select Option"
+
+# =====================================================
+# EXIT
+# =====================================================
+
+if ($choice -eq "0") { break }
 
 # =====================================================
 # RESTORE MODE
@@ -68,24 +83,65 @@ sc start DiagTrack 2>$null
 
 $DefaultServices = "SysMain","WSearch","DiagTrack"
 foreach ($svc in $DefaultServices){
-Set-Service $svc -StartupType Automatic -ErrorAction SilentlyContinue
-Start-Service $svc -ErrorAction SilentlyContinue
+    Set-Service $svc -StartupType Automatic -ErrorAction SilentlyContinue
+    Start-Service $svc -ErrorAction SilentlyContinue
 }
+
+# =====================================================
+# ULTRA UI TWEAKS
+# =====================================================
+
+Write-Host "Applying UltraUI Tweaks..." -ForegroundColor Cyan
+
+# Disable Activity History
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v PublishUserActivities /t REG_DWORD /d 0 /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v UploadUserActivities /t REG_DWORD /d 0 /f
+
+# Disable Consumer Features
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+
+# Disable Explorer Auto Folder Discovery
+reg add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell" /v FolderType /t REG_SZ /d NotSpecified /f
+
+# Disable Location Tracking
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" /v DisableLocation /t REG_DWORD /d 1 /f
+
+# Disable Telemetry
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
+sc stop DiagTrack 2>$null
+sc config DiagTrack start= disabled
+
+# Disable PowerShell Telemetry
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell" /v EnableScriptBlockLogging /t REG_DWORD /d 0 /f
+
+# Disable WPBT
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /v DisableWpbtExecution /t REG_DWORD /d 1 /f
+
+# Enable End Task Right Click
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" /v TaskbarEndTask /t REG_DWORD /d 1 /f
+
+# Remove Widgets
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarDa /t REG_DWORD /d 0 /f
+
+# Set services manual (extra safety)
+$UltraServices = "SysMain","WSearch","DiagTrack"
+foreach ($svc in $UltraServices){
+    Set-Service $svc -StartupType Manual -ErrorAction SilentlyContinue
+}
+
+# Disk cleanup
+cleanmgr /verylowdisk
 
 Write-Host "RESTORE COMPLETE ✓" -ForegroundColor Green
-shutdown /r /t 5
-exit
-}
-
-if ($choice -ne "1") {
-Write-Host "Invalid Option"
-pause
-exit
+Pause-End
+continue
 }
 
 # =====================================================
 # APPLY MODE
 # =====================================================
+
+if ($choice -ne "1") { continue }
 
 Clear-Host
 Write-Host "BOOTFPS ULTRA S+ STARTING..." -ForegroundColor Cyan
@@ -95,21 +151,21 @@ Start-Sleep 2
 Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
 Checkpoint-Computer -Description "BOOTFPS_SPLUS" -RestorePointType MODIFY_SETTINGS
 
-# ---------- Power Plan ----------
+# ---------- Power ----------
 powercfg -setactive SCHEME_MIN
 powercfg -change standby-timeout-ac 0
 powercfg -change monitor-timeout-ac 0
 
-# ---------- Mouse Input ----------
+# ---------- Mouse ----------
 reg add "HKCU\Control Panel\Mouse" /v MouseSpeed /t REG_SZ /d 0 /f
 reg add "HKCU\Control Panel\Mouse" /v MouseThreshold1 /t REG_SZ /d 0 /f
 reg add "HKCU\Control Panel\Mouse" /v MouseThreshold2 /t REG_SZ /d 0 /f
 
-# ---------- CPU Priority ----------
+# ---------- CPU ----------
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" `
 /v Win32PrioritySeparation /t REG_DWORD /d 38 /f
 
-# ---------- Gaming Scheduler ----------
+# ---------- Gaming ----------
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" `
 /v NetworkThrottlingIndex /t REG_DWORD /d 4294967295 /f
 
@@ -124,8 +180,8 @@ bcdedit /set tscsyncpolicy Enhanced
 # ---------- Services ----------
 $services = "SysMain","DiagTrack","WSearch"
 foreach ($svc in $services){
-Set-Service $svc -StartupType Manual -ErrorAction SilentlyContinue
-Stop-Service $svc -Force -ErrorAction SilentlyContinue
+    Set-Service $svc -StartupType Manual -ErrorAction SilentlyContinue
+    Stop-Service $svc -Force -ErrorAction SilentlyContinue
 }
 
 # ---------- GPU Cache ----------
@@ -133,7 +189,7 @@ Remove-Item "$env:LOCALAPPDATA\NVIDIA\DXCache\*" -Recurse -Force -ErrorAction Si
 Remove-Item "$env:LOCALAPPDATA\D3DSCache\*" -Recurse -Force -ErrorAction SilentlyContinue
 
 # =====================================================
-# FIVE M ENGINE
+# FIVEM ENGINE
 # =====================================================
 
 Write-Host "Applying FiveM ULTRA Config..."
@@ -176,7 +232,7 @@ $cachePaths = @(
 )
 
 foreach ($path in $cachePaths){
-Remove-Item "$path\*" -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item "$path\*" -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
@@ -186,12 +242,17 @@ ipconfig /flushdns
 
 Write-Host ""
 Write-Host "ULTRA S+ COMPLETE ✓" -ForegroundColor Green
-shutdown /r /t 5
+Write-Host "Restarting in 5 seconds..."
+
+Start-Sleep 5
+shutdown /r /t 0
 
 }
 catch {
-Write-Host ""
-Write-Host "===== ERROR OCCURRED =====" -ForegroundColor Red
-Write-Host $_
-pause
+    Write-Host ""
+    Write-Host "===== ERROR OCCURRED =====" -ForegroundColor Red
+    Write-Host $_
+    Pause-End
+}
+
 }
