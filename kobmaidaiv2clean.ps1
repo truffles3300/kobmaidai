@@ -117,10 +117,43 @@ Checkpoint-Computer -Description "KMD_BEFORE_TWEAK" `
 
 Write-Host "Creating KOBMAIDAI Power Plan..."
 
-$kmdGUID = (powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61)
-$kmdGUID = ($kmdGUID -split "\s+")[-1]
+# ใช้ Ultimate Performance เป็นต้นแบบ
+$Ultimate = "e9a42b02-d5df-448d-aa00-03f14749eb61"
 
-powercfg -changename $kmdGUID "KOBMAIDAI"
+# เปิด Ultimate ถ้ายังไม่มี
+powercfg -duplicatescheme $Ultimate | Out-Null
+
+# ดึง GUID ล่าสุดที่สร้าง
+$guid = (powercfg -list | Select-String "Ultimate Performance").ToString().Split()[3]
+
+# เปลี่ยนชื่อ
+powercfg -changename $guid "KOBMAIDAI" "KOBMAIDAI ULTRA PERFORMANCE MODE"
+
+# ===== UNLIMIT POWER SETTINGS =====
+powercfg -setacvalueindex $guid SUB_PROCESSOR PROCTHROTTLEMIN 100
+powercfg -setacvalueindex $guid SUB_PROCESSOR PROCTHROTTLEMAX 100
+powercfg -setacvalueindex $guid SUB_PROCESSOR PERFBOOSTMODE 2
+powercfg -setacvalueindex $guid SUB_PROCESSOR IDLEDISABLE 1
+
+# PCI Express ไม่ประหยัดไฟ
+powercfg -setacvalueindex $guid SUB_PCIEXPRESS ASPM 0
+
+# USB ไม่ sleep
+powercfg -setacvalueindex $guid SUB_USB USBSELECTSUSPEND 0
+
+# HDD ไม่ดับ
+powercfg -setacvalueindex $guid SUB_DISK DISKIDLE 0
+
+# Sleep OFF
+powercfg -setacvalueindex $guid SUB_SLEEP STANDBYIDLE 0
+
+# Monitor ไม่ดับ
+powercfg -setacvalueindex $guid SUB_VIDEO VIDEOIDLE 0
+
+# Apply
+powercfg -setactive $guid
+
+Write-Host "KOBMAIDAI Power Plan Activated!"
 
 # CPU FULL SPEED
 powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR PROCTHROTTLEMIN 100
@@ -292,6 +325,7 @@ Write-Host "Restarting..."
 Start-Sleep 5
 shutdown /r /t 0
 }
+
 
 
 
