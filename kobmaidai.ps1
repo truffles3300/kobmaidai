@@ -1,3 +1,7 @@
+$ErrorActionPreference = "Stop"
+
+try {
+
 # =====================================================
 # KMD
 # =====================================================
@@ -7,12 +11,11 @@ if (!([Security.Principal.WindowsPrincipal]
 [Security.Principal.WindowsIdentity]::GetCurrent()
 ).IsInRole([Security.Principal.WindowsBuiltinRole] "Administrator"))
 {
-Start-Process powershell "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+Start-Process powershell "-NoExit -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
 exit
 }
 
 $Host.UI.RawUI.WindowTitle = "BOOTFPS ULTRA S+"
-
 Clear-Host
 
 # ---------- UI MENU ----------
@@ -93,10 +96,24 @@ Remove-Item "$env:LOCALAPPDATA\NVIDIA\DXCache\*" -Recurse -Force -ErrorAction Si
 Remove-Item "$env:LOCALAPPDATA\D3DSCache\*" -Recurse -Force -ErrorAction SilentlyContinue
 
 # ---------- IMPORT REG ----------
-if (Test-Path "$PSScriptRoot\kmd.reg") {
+$regPath = Join-Path $PSScriptRoot "kmd.reg"
+if (Test-Path $regPath) {
 Write-Host "Applying kmd.reg..."
-reg import "$PSScriptRoot\kmd.reg"
+reg import $regPath
 }
+
+Write-Host "Applying UltraUI Tweaks..." -ForegroundColor Cyan
+
+# ---------- ULTRA UI ----------
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v PublishUserActivities /t REG_DWORD /d 0 /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v UploadUserActivities /t REG_DWORD /d 0 /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
+
+sc stop DiagTrack 2>$null
+sc config DiagTrack start= disabled
+
+cleanmgr /verylowdisk
 
 Write-Host "Applying UltraUI Tweaks..." -ForegroundColor Cyan
 
@@ -147,6 +164,7 @@ Set-Service $svc -StartupType Manual -ErrorAction SilentlyContinue
 
 # ---------- Run Disk Cleanup ----------
 cleanmgr /verylowdisk
+
 # =====================================================
 # FIVE M ULTRA ENGINE AUTO
 # =====================================================
@@ -197,7 +215,7 @@ Set-Content -Path $CitizenFile -Value $CitizenINI -Encoding ASCII
 
 Write-Host "CitizenFX.ini Applied ✓"
 
-# ---------- FIVE M CACHE CLEAN ----------
+# ---------- CACHE CLEAN ----------
 $cachePaths = @(
 "$env:LOCALAPPDATA\FiveM\FiveM.app\data\cache",
 "$env:LOCALAPPDATA\FiveM\FiveM.app\data\server-cache",
@@ -208,7 +226,6 @@ foreach ($path in $cachePaths){
 Remove-Item "$path\*" -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-# ---------- TEMP CLEAN ----------
 Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
 
@@ -220,3 +237,12 @@ Write-Host "Restarting PC..."
 
 Start-Sleep 5
 shutdown /r /t 5
+
+}
+catch {
+Write-Host ""
+Write-Host "===== ERROR OCCURRED =====" -ForegroundColor Red
+Write-Host $_
+Write-Host ""
+pause
+}
