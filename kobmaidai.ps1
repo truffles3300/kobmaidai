@@ -1,6 +1,5 @@
 # =====================================================
-# Kobmaidai.com
-# ONE COMMAND INSTALL • ALL PC SAFE
+# KMD
 # =====================================================
 
 # ---------- AUTO ADMIN ----------
@@ -8,12 +7,47 @@ if (!([Security.Principal.WindowsPrincipal]
 [Security.Principal.WindowsIdentity]::GetCurrent()
 ).IsInRole([Security.Principal.WindowsBuiltinRole] "Administrator"))
 {
-Start-Process powershell "-WindowStyle Hidden -ExecutionPolicy Bypass -Command `"irm https://raw.githubusercontent.com/USER/bootfps-ultra/main/BOOTFPS.ps1 | iex`"" -Verb RunAs
+Start-Process powershell "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
 exit
 }
 
 $Host.UI.RawUI.WindowTitle = "BOOTFPS ULTRA S+"
 
+Clear-Host
+
+# ---------- UI MENU ----------
+Write-Host ""
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host "        BOOTFPS ULTRA S+"
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "1 - APPLY ULTRA FPS (RECOMMENDED)" -ForegroundColor Green
+Write-Host "2 - RESTORE WINDOWS DEFAULT" -ForegroundColor Yellow
+Write-Host ""
+
+$choice = Read-Host "Select Option"
+
+if ($choice -eq "2") {
+
+    Write-Host "Restoring Defaults..."
+
+    powercfg -setactive SCHEME_BALANCED
+    bcdedit /deletevalue disabledynamictick
+    bcdedit /deletevalue useplatformtick
+    bcdedit /deletevalue tscsyncpolicy
+
+    Write-Host "Restore Complete ✓"
+    pause
+    exit
+}
+
+if ($choice -ne "1") {
+    Write-Host "Invalid Option"
+    pause
+    exit
+}
+
+Clear-Host
 Write-Host "BOOTFPS ULTRA S+ STARTING..." -ForegroundColor Cyan
 Start-Sleep 2
 
@@ -47,10 +81,6 @@ bcdedit /set disabledynamictick yes
 bcdedit /set useplatformtick yes
 bcdedit /set tscsyncpolicy Enhanced
 
-# ---------- WINDOWS OPT ----------
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
-
 # ---------- SERVICES ----------
 $services = "SysMain","DiagTrack","WSearch"
 foreach ($svc in $services){
@@ -58,32 +88,77 @@ Set-Service $svc -StartupType Manual -ErrorAction SilentlyContinue
 Stop-Service $svc -Force -ErrorAction SilentlyContinue
 }
 
-# ---------- GPU CACHE CLEAN ----------
+# ---------- GPU CACHE ----------
 Remove-Item "$env:LOCALAPPDATA\NVIDIA\DXCache\*" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "$env:LOCALAPPDATA\D3DSCache\*" -Recurse -Force -ErrorAction SilentlyContinue
 
+# ---------- IMPORT REG ----------
+if (Test-Path "$PSScriptRoot\kmd.reg") {
+Write-Host "Applying kmd.reg..."
+reg import "$PSScriptRoot\kmd.reg"
+}
+
+Write-Host "Applying UltraUI Tweaks..." -ForegroundColor Cyan
+
+# ---------- Disable Activity History ----------
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v PublishUserActivities /t REG_DWORD /d 0 /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v UploadUserActivities /t REG_DWORD /d 0 /f
+
+# ---------- Disable Consumer Features ----------
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" `
+/v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+
+# ---------- Disable Explorer Automatic Folder Discovery ----------
+reg add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell" `
+/v FolderType /t REG_SZ /d NotSpecified /f
+
+# ---------- Disable Location Tracking ----------
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" `
+/v DisableLocation /t REG_DWORD /d 1 /f
+
+# ---------- Disable Telemetry ----------
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" `
+/v AllowTelemetry /t REG_DWORD /d 0 /f
+
+sc stop DiagTrack 2>$null
+sc config DiagTrack start= disabled
+
+# ---------- Disable PowerShell Telemetry ----------
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell" `
+/v EnableScriptBlockLogging /t REG_DWORD /d 0 /f
+
+# ---------- Disable Windows Platform Binary Table ----------
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" `
+/v DisableWpbtExecution /t REG_DWORD /d 1 /f
+
+# ---------- Enable End Task With Right Click ----------
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" `
+/v TaskbarEndTask /t REG_DWORD /d 1 /f
+
+# ---------- Remove Widgets ----------
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" `
+/v TaskbarDa /t REG_DWORD /d 0 /f
+
+# ---------- Set Services To Manual ----------
+$UltraServices = "SysMain","WSearch","DiagTrack"
+foreach ($svc in $UltraServices){
+Set-Service $svc -StartupType Manual -ErrorAction SilentlyContinue
+}
+
+# ---------- Run Disk Cleanup ----------
+cleanmgr /verylowdisk
 # =====================================================
-# DOWNLOAD + APPLY KMD.REG (AUTO)
+# FIVE M ULTRA ENGINE AUTO
 # =====================================================
 
-Write-Host "Downloading registry tweak..."
+Write-Host "Applying FiveM ULTRA Config..."
 
-$regurl = "https://raw.githubusercontent.com/USER/bootfps-ultra/main/kmd.reg"
-$regfile = "$env:TEMP\kmd.reg"
+$FiveMData = "$env:LOCALAPPDATA\FiveM\FiveM.app\data"
+$CitizenFile = "$FiveMData\CitizenFX.ini"
 
-Invoke-WebRequest $regurl -OutFile $regfile -UseBasicParsing
-reg import $regfile
+New-Item -ItemType Directory -Path $FiveMData -Force | Out-Null
 
-# =====================================================
-# CREATE CITIZENFX.INI (AUTO)
-# =====================================================
-
-$fivemPath = "$env:LOCALAPPDATA\FiveM\FiveM.app\data"
-$iniFile = "$fivemPath\CitizenFX.ini"
-
-if (Test-Path $fivemPath){
-
-@"
+$CitizenINI = @"
 [Game]
 UpdateChannel=production
 GraphicsQuality=0
@@ -104,39 +179,44 @@ DisableShaderPrecache=1
 [Streaming]
 UseResourceCache=1
 CacheSize=14000
-MinStreamingFileSize=64
 MaxStreamingRequests=1024
-StreamingRequestBatching=1
 
 [Renderer]
 Renderer=DirectX11
 MSAA=0
 FXAA=0
-TextureQuality=0
 ShaderQuality=0
-ShadowQuality=0
-ReflectionQuality=0
-AnisotropicFiltering=0
-Tessellation=0
 PostFX=0
-WaterQuality=0
 GrassQuality=0
-ParticleQuality=0
 
 [Network]
 UseNagleAlgorithm=false
-"@ | Out-File $iniFile -Encoding ASCII
+"@
+
+Set-Content -Path $CitizenFile -Value $CitizenINI -Encoding ASCII
 
 Write-Host "CitizenFX.ini Applied ✓"
+
+# ---------- FIVE M CACHE CLEAN ----------
+$cachePaths = @(
+"$env:LOCALAPPDATA\FiveM\FiveM.app\data\cache",
+"$env:LOCALAPPDATA\FiveM\FiveM.app\data\server-cache",
+"$env:LOCALAPPDATA\FiveM\FiveM.app\data\server-cache-priv"
+)
+
+foreach ($path in $cachePaths){
+Remove-Item "$path\*" -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 # ---------- TEMP CLEAN ----------
 Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
+
 ipconfig /flushdns
 
 Write-Host ""
-Write-Host "ULTRA S+ COMPLETE ✓"
-Start-Sleep 3
+Write-Host "ULTRA S+ COMPLETE ✓" -ForegroundColor Green
+Write-Host "Restarting PC..."
 
+Start-Sleep 5
 shutdown /r /t 5
