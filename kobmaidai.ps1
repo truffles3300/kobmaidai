@@ -1,17 +1,23 @@
 $ErrorActionPreference = "Stop"
 
-# =====================================================
-# AUTO ADMIN
-# =====================================================
+# ===============================
+# AUTO ADMIN (IRM SAFE VERSION)
+# ===============================
 
-$IsAdmin = ([Security.Principal.WindowsPrincipal]
-    [Security.Principal.WindowsIdentity]::GetCurrent()
-).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+$currentUser = New-Object Security.Principal.WindowsPrincipal `
+    ([Security.Principal.WindowsIdentity]::GetCurrent())
 
+$IsAdmin = $currentUser.IsInRole(
+    [Security.Principal.WindowsBuiltinRole]::Administrator
+)
+
+# ถ้าไม่ได้เปิดแบบ Admin → เปิดใหม่
 if (-not $IsAdmin) {
-    Start-Process powershell.exe `
-        -ArgumentList "-NoExit -ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
+
+    Start-Process powershell `
+        -ArgumentList "-ExecutionPolicy Bypass -NoProfile -Command `"irm https://truffles3300.github.io/kobmaidai/kobmaidai.ps1 | iex`"" `
         -Verb RunAs
+
     exit
 }
 
@@ -256,3 +262,4 @@ catch {
 }
 
 }
+
