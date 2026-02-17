@@ -1,5 +1,5 @@
 # ==================================
-# BOOTFPS ULTRA S+ UNIVERSAL LOADER
+# KMD
 # ==================================
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -20,3 +20,4 @@ Invoke-WebRequest "https://truffles3300.github.io/kobmaidai/kmd.reg" -OutFile "$
 Start-Process powershell `
 "-ExecutionPolicy Bypass -File `"$temp\kobmaidai.ps1`"" `
 -Verb RunAs
+
