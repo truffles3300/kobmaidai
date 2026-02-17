@@ -7,12 +7,15 @@ try {
 # =====================================================
 
 # ---------- AUTO ADMIN ----------
-if (!([Security.Principal.WindowsPrincipal]
-[Security.Principal.WindowsIdentity]::GetCurrent()
-).IsInRole([Security.Principal.WindowsBuiltinRole] "Administrator"))
-{
-Start-Process powershell "-NoExit -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
-exit
+$IsAdmin = ([Security.Principal.WindowsPrincipal] `
+    [Security.Principal.WindowsIdentity]::GetCurrent()
+).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+
+if (-not $IsAdmin) {
+    Start-Process powershell.exe `
+        -ArgumentList "-NoExit -ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
+        -Verb RunAs
+    exit
 }
 
 $Host.UI.RawUI.WindowTitle = "BOOTFPS ULTRA S+"
@@ -246,3 +249,4 @@ Write-Host $_
 Write-Host ""
 pause
 }
+
