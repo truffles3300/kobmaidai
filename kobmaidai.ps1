@@ -93,55 +93,6 @@ foreach ($svc in $DefaultServices){
     Start-Service $svc -ErrorAction SilentlyContinue
 }
 
-# =====================================================
-# ULTRA UI TWEAKS
-# =====================================================
-
-Write-Host "Applying UltraUI Tweaks..." -ForegroundColor Cyan
-
-# Disable Activity History
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v PublishUserActivities /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v UploadUserActivities /t REG_DWORD /d 0 /f
-
-# Disable Consumer Features
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
-
-# Disable Explorer Auto Folder Discovery
-reg add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell" /v FolderType /t REG_SZ /d NotSpecified /f
-
-# Disable Location Tracking
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" /v DisableLocation /t REG_DWORD /d 1 /f
-
-# Disable Telemetry
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
-sc stop DiagTrack 2>$null
-sc config DiagTrack start= disabled
-
-# Disable PowerShell Telemetry
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell" /v EnableScriptBlockLogging /t REG_DWORD /d 0 /f
-
-# Disable WPBT
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /v DisableWpbtExecution /t REG_DWORD /d 1 /f
-
-# Enable End Task Right Click
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" /v TaskbarEndTask /t REG_DWORD /d 1 /f
-
-# Remove Widgets
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarDa /t REG_DWORD /d 0 /f
-
-# Set services manual (extra safety)
-$UltraServices = "SysMain","WSearch","DiagTrack"
-foreach ($svc in $UltraServices){
-    Set-Service $svc -StartupType Manual -ErrorAction SilentlyContinue
-}
-
-# Disk cleanup
-cleanmgr /verylowdisk
-
-Write-Host "RESTORE COMPLETE ✓" -ForegroundColor Green
-Pause-End
-continue
-}
 
 # =====================================================
 # APPLY MODE
@@ -244,6 +195,56 @@ foreach ($path in $cachePaths){
 Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "C:\Windows\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
 
+# =====================================================
+# ULTRA UI TWEAKS
+# =====================================================
+
+Write-Host "Applying UltraUI Tweaks..." -ForegroundColor Cyan
+
+# Disable Activity History
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v PublishUserActivities /t REG_DWORD /d 0 /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v UploadUserActivities /t REG_DWORD /d 0 /f
+
+# Disable Consumer Features
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f
+
+# Disable Explorer Auto Folder Discovery
+reg add "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell" /v FolderType /t REG_SZ /d NotSpecified /f
+
+# Disable Location Tracking
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" /v DisableLocation /t REG_DWORD /d 1 /f
+
+# Disable Telemetry
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
+sc stop DiagTrack 2>$null
+sc config DiagTrack start= disabled
+
+# Disable PowerShell Telemetry
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell" /v EnableScriptBlockLogging /t REG_DWORD /d 0 /f
+
+# Disable WPBT
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /v DisableWpbtExecution /t REG_DWORD /d 1 /f
+
+# Enable End Task Right Click
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" /v TaskbarEndTask /t REG_DWORD /d 1 /f
+
+# Remove Widgets
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarDa /t REG_DWORD /d 0 /f
+
+# Set services manual (extra safety)
+$UltraServices = "SysMain","WSearch","DiagTrack"
+foreach ($svc in $UltraServices){
+    Set-Service $svc -StartupType Manual -ErrorAction SilentlyContinue
+}
+
+# Disk cleanup
+cleanmgr /verylowdisk
+
+Write-Host "RESTORE COMPLETE ✓" -ForegroundColor Green
+Pause-End
+continue
+}
+
 ipconfig /flushdns
 
 Write-Host ""
@@ -262,4 +263,5 @@ catch {
 }
 
 }
+
 
