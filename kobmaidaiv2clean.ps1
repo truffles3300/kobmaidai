@@ -115,56 +115,47 @@ Checkpoint-Computer -Description "KMD_BEFORE_TWEAK" `
 # KOBMAIDAI POWER PLAN (UNLIMITED PERFORMANCE)
 # =====================================================
 
-Write-Host "Creating KOBMAIDAI Power Plan..."
+Write-Host "Activating Ultimate Performance..." -ForegroundColor Cyan
 
-# ใช้ Ultimate Performance เป็นต้นแบบ
-$Ultimate = "e9a42b02-d5df-448d-aa00-03f14749eb61"
+$UltimateGUID = "e9a42b02-d5df-448d-aa00-03f14749eb61"
 
 # เปิด Ultimate ถ้ายังไม่มี
-powercfg -duplicatescheme $Ultimate | Out-Null
+powercfg -duplicatescheme $UltimateGUID 2>$null | Out-Null
 
-# ดึง GUID ล่าสุดที่สร้าง
-$guid = (powercfg -list | Select-String "Ultimate Performance").ToString().Split()[3]
-
-# เปลี่ยนชื่อ
-powercfg -changename $guid "KOBMAIDAI" "KOBMAIDAI ULTRA PERFORMANCE MODE"
+# ใช้ Ultimate ตรง ๆ
+powercfg -setactive $UltimateGUID
 
 # ===== UNLIMIT POWER SETTINGS =====
-powercfg -setacvalueindex $guid SUB_PROCESSOR PROCTHROTTLEMIN 100
-powercfg -setacvalueindex $guid SUB_PROCESSOR PROCTHROTTLEMAX 100
-powercfg -setacvalueindex $guid SUB_PROCESSOR PERFBOOSTMODE 2
-powercfg -setacvalueindex $guid SUB_PROCESSOR IDLEDISABLE 1
 
-# PCI Express ไม่ประหยัดไฟ
-powercfg -setacvalueindex $guid SUB_PCIEXPRESS ASPM 0
+powercfg -setacvalueindex $UltimateGUID SUB_PROCESSOR PROCTHROTTLEMIN 100
+powercfg -setacvalueindex $UltimateGUID SUB_PROCESSOR PROCTHROTTLEMAX 100
+powercfg -setacvalueindex $UltimateGUID SUB_PROCESSOR PERFBOOSTMODE 2
+powercfg -setacvalueindex $UltimateGUID SUB_PROCESSOR IDLEDISABLE 1
+powercfg -setacvalueindex $UltimateGUID SUB_PROCESSOR CPMINCORES 100
+powercfg -setacvalueindex $UltimateGUID SUB_PROCESSOR CPMAXCORES 100
 
-# USB ไม่ sleep
-powercfg -setacvalueindex $guid SUB_USB USBSELECTSUSPEND 0
+# PCI Express
+powercfg -setacvalueindex $UltimateGUID SUB_PCIEXPRESS ASPM 0
 
-# HDD ไม่ดับ
-powercfg -setacvalueindex $guid SUB_DISK DISKIDLE 0
+# USB
+powercfg -setacvalueindex $UltimateGUID SUB_USB USBSELECTSUSPEND 0
+
+# HDD
+powercfg -setacvalueindex $UltimateGUID SUB_DISK DISKIDLE 0
 
 # Sleep OFF
-powercfg -setacvalueindex $guid SUB_SLEEP STANDBYIDLE 0
+powercfg -setacvalueindex $UltimateGUID SUB_SLEEP STANDBYIDLE 0
 
-# Monitor ไม่ดับ
-powercfg -setacvalueindex $guid SUB_VIDEO VIDEOIDLE 0
+# Monitor OFF disabled
+powercfg -setacvalueindex $UltimateGUID SUB_VIDEO VIDEOIDLE 0
 
-# Apply
-powercfg -setactive $guid
+powercfg -setactive $UltimateGUID
 
-Write-Host "KOBMAIDAI Power Plan Activated!"
+Write-Host "Ultimate Performance Activated ✓" -ForegroundColor Green
 
-# CPU FULL SPEED
-powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR PROCTHROTTLEMIN 100
-powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR PROCTHROTTLEMAX 100
-powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR PERFBOOSTMODE 2
-powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR IDLEDISABLE 1
-powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR CPMINCORES 100
-powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR CPMAXCORES 100
 
 # USB LATENCY OFF
-powercfg -setacvalueindex $kmdGUID SUB_USB USBSELECTIVE SUSPEND 0
+powercfg -setacvalueindex $kmdGUID SUB_USB USBSELECTIVESUSPEND 0
 
 # PCI EXPRESS OFF POWER SAVE
 powercfg -setacvalueindex $kmdGUID SUB_PCIEXPRESS ASPM 0
@@ -324,7 +315,7 @@ Write-Host "Restarting..."
 
 Start-Sleep 5
 shutdown /r /t 0
-}
+
 
 
 
