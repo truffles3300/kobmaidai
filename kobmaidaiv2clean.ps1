@@ -111,8 +111,71 @@ Enable-ComputerRestore -Drive "C:\" -ErrorAction SilentlyContinue
 Checkpoint-Computer -Description "KMD_BEFORE_TWEAK" `
 -RestorePointType MODIFY_SETTINGS
 
-# ---------- POWER ----------
-powercfg -setactive SCHEME_MIN
+# =====================================================
+# KOBMAIDAI POWER PLAN (UNLIMITED PERFORMANCE)
+# =====================================================
+
+Write-Host "Creating KOBMAIDAI Power Plan..."
+
+$kmdGUID = (powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61)
+$kmdGUID = ($kmdGUID -split "\s+")[-1]
+
+powercfg -changename $kmdGUID "KOBMAIDAI"
+
+# CPU FULL SPEED
+powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR PROCTHROTTLEMIN 100
+powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR PROCTHROTTLEMAX 100
+powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR PERFBOOSTMODE 2
+powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR IDLEDISABLE 1
+powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR CPMINCORES 100
+powercfg -setacvalueindex $kmdGUID SUB_PROCESSOR CPMAXCORES 100
+
+# USB LATENCY OFF
+powercfg -setacvalueindex $kmdGUID SUB_USB USBSELECTIVE SUSPEND 0
+
+# PCI EXPRESS OFF POWER SAVE
+powercfg -setacvalueindex $kmdGUID SUB_PCIEXPRESS ASPM 0
+
+powercfg -setactive $kmdGUID
+
+
+# =====================================================
+# CPU UNPARK (REAL)
+# =====================================================
+
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\0cc5b647-c1df-4637-891a-dec35c318583\ea062031-0e34-4ff1-9b6d-eb1059334028" `
+/v ValueMax /t REG_DWORD /d 0 /f
+
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\0cc5b647-c1df-4637-891a-dec35c318583\ea062031-0e34-4ff1-9b6d-eb1059334028" `
+/v ValueMin /t REG_DWORD /d 0 /f
+
+
+# =====================================================
+# GPU LATENCY ENGINE
+# =====================================================
+
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" `
+/v HwSchMode /t REG_DWORD /d 2 /f
+
+
+# =====================================================
+# NETWORK LOW LATENCY
+# =====================================================
+
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" `
+/v TcpAckFrequency /t REG_DWORD /d 1 /f
+
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" `
+/v TCPNoDelay /t REG_DWORD /d 1 /f
+
+
+# =====================================================
+# BACKGROUND APPS OFF
+# =====================================================
+
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" `
+/v GlobalUserDisabled /t REG_DWORD /d 1 /f
+
 
 # ---------- CPU Scheduler ----------
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" `
@@ -223,3 +286,4 @@ Write-Host "Restarting..."
 Start-Sleep 5
 shutdown /r /t 0
 }
+
