@@ -1,25 +1,22 @@
-# ===================================
-# BOOTFPS ULTRA WEB LOADER
-# ===================================
+# ==================================
+# BOOTFPS ULTRA S+ UNIVERSAL LOADER
+# ==================================
 
-$Host.UI.RawUI.WindowTitle = "BOOTFPS ULTRA WEB"
+$ErrorActionPreference = "SilentlyContinue"
 
-Write-Host ""
-Write-Host "BOOTFPS ULTRA LOADING..." -ForegroundColor Cyan
-Start-Sleep 2
+# TLS FIX (กันโหลดไม่ได้บางเครื่อง)
+[Net.ServicePointManager]::SecurityProtocol =
+[Net.SecurityProtocolType]::Tls12
 
-# Hide Window
-Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("kernel32.dll")]
-public static extern IntPtr GetConsoleWindow();
-[DllImport("user32.dll")]
-public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-'
+# Temp folder
+$temp = "$env:TEMP\bootfps"
+New-Item -ItemType Directory -Path $temp -Force | Out-Null
 
-$consolePtr = [Console.Window]::GetConsoleWindow()
-[Console.Window]::ShowWindow($consolePtr, 0)
+# Download files from GitHub Pages
+Invoke-WebRequest "https://truffles3300.github.io/kobmaidai/kobmaidai.ps1" -OutFile "$temp\kobmaidai.ps1"
+Invoke-WebRequest "https://truffles3300.github.io/kobmaidai/kmd.reg" -OutFile "$temp\kmd.reg"
 
-# Download Ultra Script
-$scriptURL = "https://truffles3300.github.io/kobmaidai/ultra.ps1"
-
-Invoke-Expression (Invoke-RestMethod $scriptURL)
+# Run main script as ADMIN
+Start-Process powershell `
+"-ExecutionPolicy Bypass -File `"$temp\kobmaidai.ps1`"" `
+-Verb RunAs
