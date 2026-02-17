@@ -270,6 +270,9 @@ Remove-Item "$env:LOCALAPPDATA\NVIDIA\DXCache\*" `
 -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "$env:LOCALAPPDATA\D3DSCache\*" `
 -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:LOCALAPPDATA\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:WINDIR\Prefetch\*" -Recurse -Force -ErrorAction SilentlyContinue
+
 
 # ---------- CLEAN ----------
 Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
@@ -289,5 +292,6 @@ Write-Host "Restarting..."
 Start-Sleep 5
 shutdown /r /t 0
 }
+
 
 
