@@ -122,17 +122,25 @@ Start-Process regedit.exe `
 
 
 # =====================================================
-# FIVEM ENGINE CONFIG (เพิ่มให้)
+# FIVEM ENGINE CONFIG (IRM FIXED VERSION)
 # =====================================================
 
 Write-Host "Applying FiveM ULTRA Config..." -ForegroundColor Cyan
 
-$FiveMData = "$env:LOCALAPPDATA\FiveM\FiveM.app\data"
-$CitizenFile = "$FiveMData\CitizenFX.ini"
+$FiveMData = Join-Path $env:LOCALAPPDATA "FiveM\FiveM.app\data"
+$CitizenFile = Join-Path $FiveMData "CitizenFX.ini"
 
-New-Item -ItemType Directory -Path $FiveMData -Force | Out-Null
+# ---- ปิด FiveM ก่อน (สำคัญมาก) ----
+Get-Process FiveM -ErrorAction SilentlyContinue | Stop-Process -Force
 
-@"
+Start-Sleep 2
+
+# ---- สร้าง path ถ้ายังไม่มี ----
+if (!(Test-Path $FiveMData)) {
+    New-Item -ItemType Directory -Path $FiveMData -Force | Out-Null
+}
+
+$cfg = @"
 [Game]
 GraphicsQuality=0
 TextureQuality=0
@@ -155,8 +163,20 @@ ShaderQuality=0
 
 [Network]
 UseNagleAlgorithm=false
-"@ | Set-Content $CitizenFile -Encoding ASCII
+"@
 
+# ---- เขียนแบบ IRM SAFE ----
+$cfg | Out-File -FilePath $CitizenFile -Encoding ASCII -Force
+
+Start-Sleep 1
+
+# ---- ตรวจว่าลงจริงไหม ----
+if (Test-Path $CitizenFile) {
+    Write-Host "CitizenFX.ini Installed ✓" -ForegroundColor Green
+}
+else {
+    Write-Host "FAILED to create CitizenFX.ini !" -ForegroundColor Red
+}
 
 # ---------- FiveM Cache Clean ----------
 $cachePaths = @(
@@ -210,3 +230,4 @@ Pause-End
 }
 
 }
+
