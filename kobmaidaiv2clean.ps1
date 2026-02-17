@@ -315,6 +315,8 @@ Write-Host "Restarting..."
 
 Start-Sleep 5
 shutdown /r /t 0
+}
+
 
 
 
