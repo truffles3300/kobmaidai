@@ -238,6 +238,81 @@ Write-Host ""
 Write-Host "ULTRA S+ COMPLETE ✓" -ForegroundColor Green
 Write-Host "Restarting PC..."
 
+if ($choice -eq "2") {
+
+Write-Host ""
+Write-Host "RESTORING WINDOWS DEFAULT..." -ForegroundColor Yellow
+
+# ---------- POWER ----------
+powercfg -setactive SCHEME_BALANCED
+powercfg -restoredefaultschemes
+
+# ---------- TIMER RESET ----------
+bcdedit /deletevalue disabledynamictick 2>$null
+bcdedit /deletevalue useplatformtick 2>$null
+bcdedit /deletevalue tscsyncpolicy 2>$null
+
+# ---------- MOUSE ----------
+reg add "HKCU\Control Panel\Mouse" /v MouseSpeed /t REG_SZ /d 1 /f
+reg add "HKCU\Control Panel\Mouse" /v MouseThreshold1 /t REG_SZ /d 6 /f
+reg add "HKCU\Control Panel\Mouse" /v MouseThreshold2 /t REG_SZ /d 10 /f
+
+# ---------- PRIORITY ----------
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" `
+/v Win32PrioritySeparation /f 2>$null
+
+# ---------- GAMING SCHEDULER ----------
+reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" `
+/v NetworkThrottlingIndex /f 2>$null
+
+reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" `
+/v SystemResponsiveness /f 2>$null
+
+# ---------- TELEMETRY ----------
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" `
+/v AllowTelemetry /f 2>$null
+
+sc config DiagTrack start= auto 2>$null
+sc start DiagTrack 2>$null
+
+# ---------- ACTIVITY HISTORY ----------
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" `
+/v PublishUserActivities /f 2>$null
+
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" `
+/v UploadUserActivities /f 2>$null
+
+# ---------- CONSUMER FEATURES ----------
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" `
+/v DisableWindowsConsumerFeatures /f 2>$null
+
+# ---------- LOCATION ----------
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" `
+/v DisableLocation /f 2>$null
+
+# ---------- WPBT ----------
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" `
+/v DisableWpbtExecution /f 2>$null
+
+# ---------- TASKBAR ----------
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" `
+/v TaskbarEndTask /f 2>$null
+
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" `
+/v TaskbarDa /f 2>$null
+
+# ---------- SERVICES ----------
+$DefaultServices = "SysMain","WSearch","DiagTrack"
+foreach ($svc in $DefaultServices){
+Set-Service $svc -StartupType Automatic -ErrorAction SilentlyContinue
+Start-Service $svc -ErrorAction SilentlyContinue
+}
+
+Write-Host ""
+Write-Host "WINDOWS RESTORED SUCCESSFULLY" -ForegroundColor Green
+Write-Host "Restarting PC..."
+
+
 Start-Sleep 5
 shutdown /r /t 5
 
@@ -249,4 +324,5 @@ Write-Host $_
 Write-Host ""
 pause
 }
+
 
