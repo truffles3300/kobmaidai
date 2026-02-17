@@ -84,13 +84,18 @@ reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemP
 reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" `
 /v SystemResponsiveness /f 2>$null
 
-sc config DiagTrack start= auto 2>$null
-sc start DiagTrack 2>$null
+cmd /c "sc config DiagTrack start= auto" 2>$null
+cmd /c "sc start DiagTrack" 2>$null
 
 $DefaultServices = "SysMain","WSearch","DiagTrack"
 foreach ($svc in $DefaultServices){
     Set-Service $svc -StartupType Automatic -ErrorAction SilentlyContinue
     Start-Service $svc -ErrorAction SilentlyContinue
+}
+
+Write-Host "RESTORE COMPLETE ✓" -ForegroundColor Green
+Pause-End
+continue
 }
 
 
@@ -263,5 +268,6 @@ catch {
 }
 
 }
+
 
 
