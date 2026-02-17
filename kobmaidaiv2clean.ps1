@@ -217,6 +217,9 @@ Start-Process regedit.exe `
 
 Write-Host "Applying FiveM Config..."
 
+Get-Process FiveM -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep 2
+
 $FiveMData="$env:LOCALAPPDATA\FiveM\FiveM.app\data"
 $CitizenFile="$FiveMData\CitizenFX.ini"
 
@@ -286,4 +289,5 @@ Write-Host "Restarting..."
 Start-Sleep 5
 shutdown /r /t 0
 }
+
 
