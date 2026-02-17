@@ -2,22 +2,38 @@
 # KMD
 # ==================================
 
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
-# TLS FIX (กันโหลดไม่ได้บางเครื่อง)
+Write-Host "Downloading BOOTFPS..." -ForegroundColor Cyan
+
+# TLS FIX
 [Net.ServicePointManager]::SecurityProtocol =
 [Net.SecurityProtocolType]::Tls12
 
-# Temp folder
 $temp = "$env:TEMP\bootfps"
 New-Item -ItemType Directory -Path $temp -Force | Out-Null
 
-# Download files from GitHub Pages
-Invoke-WebRequest "https://truffles3300.github.io/kobmaidai/kobmaidai.ps1" -OutFile "$temp\kobmaidai.ps1"
-Invoke-WebRequest "https://truffles3300.github.io/kobmaidai/kmd.reg" -OutFile "$temp\kmd.reg"
+try {
 
-# Run main script as ADMIN
-Start-Process powershell `
-"-ExecutionPolicy Bypass -File `"$temp\kobmaidai.ps1`"" `
--Verb RunAs
+Invoke-WebRequest `
+"https://truffles3300.github.io/kobmaidai/kobmaidai.ps1" `
+-OutFile "$temp\kobmaidai.ps1"
 
+Invoke-WebRequest `
+"https://truffles3300.github.io/kobmaidai/kmd.reg" `
+-OutFile "$temp\kmd.reg"
+
+Write-Host "Launch Script..." -ForegroundColor Green
+
+Start-Process powershell -ArgumentList @(
+"-NoExit",
+"-ExecutionPolicy Bypass",
+"-File `"$temp\kobmaidai.ps1`""
+) -Verb RunAs
+
+}
+catch {
+Write-Host "ERROR:" -ForegroundColor Red
+Write-Host $_
+pause
+}
